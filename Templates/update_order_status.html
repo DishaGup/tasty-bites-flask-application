@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Order Status</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+</head>
+<body>
+    <h1>Update Order Status</h1>
+    <form method="POST">
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+          <option value="received" {% if order['status'] == "received" %}selected{% endif %}>Received</option>
+          <option value="in progress" {% if order['status'] == 'in progress' %}selected{% endif %}>In Progress</option>
+          <option value="ready for pickup" {% if order['status'] == 'ready for pickup' %}selected{% endif %}>Ready for Pickup</option>
+          <option value="completed">Completed</option>
+        </select>
+        
+        
+        <button type="submit">Update</button>
+    </form>
+</body>
+</html>

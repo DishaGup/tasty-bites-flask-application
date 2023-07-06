@@ -1,5 +1,9 @@
 import json
+from flask import Flask, render_template, request, redirect, url_for, flash
 
+
+app = Flask(__name__)
+app.secret_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiw'
 # Save data to a file
 
 
@@ -27,89 +31,158 @@ def load_data():
 # Main program
 
 
+@app.route('/')
+def index():
+    return 'Welcome to Zesty Zomato!'
+
+
+@app.route('/menu')
+def display_menu():
+    return render_template('menu.html', menu=menu)
+
+# zomato.py
+
+# ... existing code ...
+
+
+@app.route('/add_dish', methods=['GET', 'POST'])
+def add_dish():
+    if request.method == 'POST':
+        dish_name = request.form['dish_name']
+        price = float(request.form['price'])
+
+        # Create a new dish
+        dish_id = len(menu) + 1
+        dish = {
+            'id': dish_id,
+            'name': dish_name,
+            'price': price,
+            'availability': True,
+        }
+
+        # Add the new dish to the menu
+        menu.append(dish)
+
+        # Save the updated menu to the file
+        save_data(menu, orders)
+
+        return redirect(url_for('display_menu'))
+
+    return render_template('add_dish.html')
+
+
+# zomato.py
+
+# ... existing code ...
+@app.route('/remove_dish/<int:dish_id>', methods=['GET', 'POST'])
+def remove_dish(dish_id):
+    dish_id = int(dish_id)
+    dish = find_dish_by_id(menu, dish_id)
+
+    if dish is None:
+        flash('Dish not found.')
+        return redirect(url_for('display_menu'))
+
+    if request.method == 'POST':
+        menu.remove(dish)
+        save_data(menu, orders)
+
+        flash('Dish removed successfully.')
+        return redirect(url_for('display_menu'))
+
+    return render_template('remove_dish.html', dish=dish)
+
+
+# zomato.py
+
+# ... existing code ...
+@app.route('/update_availability/<int:dish_id>', methods=['GET', 'POST'])
+def update_availability(dish_id):
+    dish = find_dish_by_id(menu, dish_id)
+
+    if dish is None:
+        return render_template('dish_not_found.html')
+
+    if request.method == 'POST':
+        availability = request.form.get('availability')
+        dish['availability'] = (availability == 'available')
+        save_data(menu, orders)
+
+        flash('Availability updated successfully.')
+        return redirect(url_for('display_menu'))
+
+    return render_template('update_availability.html', dish=dish)
+
+
+@app.route('/take_order', methods=['GET', 'POST'])
+def take_order():
+    if request.method == 'POST':
+        customer_name = request.form.get('customer_name')
+        dish_ids = request.form.getlist('dish_ids')
+
+        # Validate if customer name and dish IDs are provided
+        if not customer_name or not dish_ids:
+            flash('Please provide customer name and select at least one dish.')
+            return redirect(url_for('display_menu'))
+
+        # Convert dish IDs to integers
+        dish_ids = [int(dish_id) for dish_id in dish_ids]
+
+        # Create the order
+        order_id = len(orders) + 1
+        order = {
+            'id': order_id,
+            'customer_name': customer_name,
+            'dishes': [],
+            'status': 'received'
+        }
+
+        # Add selected dishes to the order
+        for dish_id in dish_ids:
+            dish = find_dish_by_id(menu, dish_id)
+            if dish:
+                order['dishes'].append(dish)
+
+        # Add the order to the orders list
+        orders.append(order)
+        save_data(menu, orders)
+
+        flash('Order placed successfully.')
+        return redirect(url_for('display_menu'))
+
+    return render_template('take_order.html', menu=menu)
+
+@app.route('/review_orders')
+def review_orders():
+    status_filter = request.args.get('status')
+    filtered_orders = [order for order in orders if order['status'] == status_filter] if status_filter else orders
+    for order in filtered_orders:
+        total_price = 0
+        for dish in order['dishes']:
+            total_price += dish['price']
+        order['total_price'] = total_price
+    return render_template('review_orders.html', orders=filtered_orders)
+
+
+@app.route('/update_order_status/<int:order_id>', methods=['GET', 'POST'])
+def update_order_status(order_id):
+    order = find_order_by_id(orders, order_id)
+
+    if order is None:
+        return render_template('order_not_found.html')
+
+    if request.method == 'POST':
+        status = request.form['status']
+        order['status'] = status
+        save_data(menu, orders)
+
+        flash('Order status updated successfully.')
+        return redirect(url_for('review_orders'))
+
+    return render_template('update_order_status.html', order=order)
+
+
 # Load data from the file
-menu, orders = load_data()
-
-
-def display_menu(menu):
-    print("Menu:")
-    for dish in menu:
-        print(f"{dish['id']}. {dish['name']} - ${dish['price']}")
-        print("-----------")
-    print()
-
-
-def add_dish(menu, dish_id, dish_name, price):
-    for dish in menu:
-        if dish["id"] == dish_id:
-            print("Dish with the same ID already exists.")
-            return
-
-    dish = {"id": dish_id, "name": dish_name,
-            "price": price, "availability": True}
-    menu.append(dish)
-    print("Dish added successfully.")
-
-# Usage example
-# add_dish(menu, 4, "Paneer Tikka", 9.99)
-
-
-def remove_dish(menu, dish_id):
-    for dish in menu:
-        if dish["id"] == dish_id:
-            menu.remove(dish)
-            print("Dish removed Successfully")
-            return
-    print("Dish not Found")
-
-
-# remove_dish(menu, 2)
-
-
-def update_availability(menu, dish_id, availability):
-    for dish in menu:
-        if dish["id"] == dish_id:
-            dish["availability"] = availability
-            print("Availability updated successfully.")
-            return
-
-    print("Dish not found.")
-
-# Usage example
-# update_availability(menu, 1, False)
-
-
-def take_order(menu, customer_name, dish_ids):
-    order_id = len(orders) + 1  # Generate a unique order ID
-
-    order = {
-        "id": order_id,
-        "customer_name": customer_name,
-        "dishes": [],
-        "status": "received"
-    }
-
-    for dish_id in dish_ids:
-        dish_id = int(dish_id)  # Convert dish_id to integer
-        dish = find_dish_by_id(menu, dish_id)
-
-        if dish:
-            if dish["availability"]:
-                order["dishes"].append(dish)
-                print(f"Dish with ID {dish_id} added to the order.")
-            else:
-                print(f"Dish with ID {dish_id} is not available.")
-        else:
-            print(f"Dish with ID {dish_id} not found in the menu.")
-            return
-
-    # Process the order further (e.g., update status, calculate total, etc.)
-    orders.append(order)
-    print("Order placed successfully.")
-    print("-----------")
-
-
-# Helper function to find a dish by ID
 
 
 def find_dish_by_id(menu, dish_id):
@@ -118,137 +191,15 @@ def find_dish_by_id(menu, dish_id):
             return dish
     return None
 
-# Usage example
-# take_order(menu, "John Doe", [1, 3])
 
-
-def update_order_status(orders, order_id, status):
+def find_order_by_id(orders, order_id):
     for order in orders:
-        if order["id"] == order_id:
-            order["status"] = status
-            print("Order status updated successfully.")
-            print("-----------")
-            return
-
-    print("Order not found.")
-    print("-----------")
+        if order['id'] == order_id:
+            return order
+    return None
 
 
-# Usage example
-# update_order_status(orders, 1, "preparing")
-
-
-def review_orders(orders):
-    if len(orders) == 0:
-        print("No orders found.")
-        return
-
-    print("Reviewing all orders:")
-    for order in orders:
-        print(f"Order ID: {order['id']}")
-        print(f"Customer Name: {order['customer_name']}")
-        print("Dishes:")
-        total_price = 0.0  # Initialize total price for the order
-        for dish in order['dishes']:
-            print(f"- {dish['name']} - ${dish['price']}")
-            total_price += dish['price']  # Add dish price to the total price
-        print(f"Status: {order['status']}")
-        # Display the total price with two decimal places
-        print(f"Total Price: ${total_price:.2f}")
-        print("-----------------------")
-
-
-# Usage example
-# review_orders(orders)
-
-
-def update_order_status(menu, orders, order_id, status):
-    for order in orders:
-        if order["id"] == order_id:
-            order["status"] = status
-            print("Order status updated successfully.")
-            return
-
-    print("Order not found.")
-
-# Usage example
-# update_order_status(orders, 1, "preparing")
-
-
-# Main program
-
-while True:
-    print("Zesty Zomato - Food Delivery System")
-    print("1. Add a new dish to the menu")
-    print("2. Remove a dish from the menu")
-    print("3. Update the availability of a dish")
-    print("4. Take a new order")
-    print("5. Update the status of an order")
-    print("6. Review all orders")
-    print("7. Display the menu")
-    print("8. View item details")
-    print("9. View orders by status")
-    print("0. Exit")
-
-    choice = input("Enter your choice: ")
-
-    if choice == "1":
-        dish_id = int(input("Enter dish ID: "))
-        dish_name = input("Enter dish name: ")
-        price = float(input("Enter dish price: "))
-
-        add_dish(menu, dish_id, dish_name, price)
-
-    elif choice == "2":
-        dish_id = int(input("Enter dish ID: "))
-
-        remove_dish(menu, dish_id)
-
-    elif choice == "3":
-        dish_id = int(input("Enter dish ID: "))
-        availability = input(
-            "Enter availability (True/False): ").lower() == "true"
-
-        update_availability(menu, dish_id, availability)
-
-    elif choice == "4":
-        customer_name = input("Enter Your name: ")
-        display_menu(menu)
-        dish_ids = input("Enter dish Ids (comma-separated): ").split(",")
-        take_order(menu, customer_name, dish_ids)
-
-    elif choice == "5":
-        review_orders(orders)
-        order_id = input("Enter Unique Order Id: ")
-        status = input("Enter Order status: ")
-        update_order_status(menu, orders, order_id, status)
-
-    elif choice == "6":
-        review_orders(orders)
-
-    elif choice == "7":
-        display_menu(menu)
-
-    elif choice == "8":
-        dish_id = int(input("Enter dish ID: "))
-        dish = find_dish_by_id(menu, dish_id)
-        if dish:
-            print("Item details:")
-            print(f"ID: {dish['id']}")
-            print(f"Name: {dish['name']}")
-            print(f"Price: ${dish['price']}")
-            print(
-                f"Availability: {'Available' if dish['availability'] else 'Not available'}")
-
-    elif choice == "9":
-        status = input("Enter the status to filter orders: ")
-        filtered_orders = [
-            order for order in orders if order['status'].lower() == status.lower()]
-        review_orders(filtered_orders)
-
-    elif choice == "0":
-        save_data(menu, orders)
-        break
-
-    else:
-        print("Invalid choice. Please try again.")
+if __name__ == '__main__':
+    app.secret_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiw'
+    menu, orders = load_data()
+    app.run()

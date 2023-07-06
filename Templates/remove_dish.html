@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Dish</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+</head>
+<body>
+    <!-- remove_dish.html -->
+
+<h1>Remove a Dish</h1>
+<form method="POST" action="{{ url_for('remove_dish', dish_id=dish.id) }}">
+
+  <label for="dish_id">Dish ID:</label>
+  <input type="number" id="dish_id" name="dish_id" required><br>
+
+  <input type="submit" value="Remove Dish">
+</form>
+
+</body>
+</html>

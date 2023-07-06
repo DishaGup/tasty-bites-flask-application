@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zomato - Menu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+</head>
+<body>
+    <h1>Menu:</h1>
+    {% for dish in menu %}
+    <div>
+        <p>{{ dish['id'] }}. {{ dish['name'] }} - ${{ dish['price'] }}</p>
+        <p>Availability: {% if dish['availability'] %}Yes{% else %}No{% endif %}</p>
+    </div>
+    {% endfor %}
+</body>
+</html>

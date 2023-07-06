@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update availability</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+</head>
+<body>
+    <!-- update_availability.html -->
+
+<h1>Update Dish Availability</h1>
+<form method="POST" action="{{ url_for('update_availability') }}">
+  <label for="dish_id">Dish ID:</label>
+  <input type="number" id="dish_id" name="dish_id" required><br>
+
+  <label for="availability">Availability:</label>
+  <select id="availability" name="availability" required>
+    <option value="true">Available</option>
+    <option value="false">Not Available</option>
+  </select><br>
+
+  <input type="submit" value="Update Availability">
+</form>
+
+</body>
+</html>

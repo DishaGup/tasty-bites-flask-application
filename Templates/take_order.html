@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Take Order</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+</head>
+<body>
+    <h1>Take Order</h1>
+    <form method="post">
+        <label for="customer_name">Customer Name:</label>
+        <input type="text" name="customer_name" id="customer_name" required><br>
+
+        <label for="dish_ids">Select Dishes:</label><br>
+        {% for dish in menu %}
+            <input type="checkbox" name="dish_ids" value="{{ dish.id }}"> {{ dish.name }}<br>
+        {% endfor %}
+
+        <button type="submit">Place Order</button>
+    </form>
+</body>
+</html>
