@@ -1,8 +1,17 @@
 import json
 from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_socketio import SocketIO, emit,socketio
 
 
 app = Flask(__name__)
+@socketio.on('connect', namespace='/status')
+def handle_connect():
+    print('Client connected')
+
+@socketio.on('disconnect', namespace='/status')
+def handle_disconnect():
+    print('Client disconnected')
+
 app.secret_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiw'
 # Save data to a file
 
@@ -202,4 +211,7 @@ def find_order_by_id(orders, order_id):
 if __name__ == '__main__':
     app.secret_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiw'
     menu, orders = load_data()
+    for order in orders:
+    socketio.emit('order_status_update', {'order_id': order['id'], 'status': order['status']}, namespace='/status')
+
     app.run()

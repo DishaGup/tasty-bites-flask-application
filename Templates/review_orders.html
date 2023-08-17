@@ -3,6 +3,7 @@
 <head>
     <title>Review Orders</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
 
 </head>
 <body>
@@ -10,8 +11,8 @@
     <form method="GET" action="{{ url_for('review_orders') }}">
         <label for="status">Filter by Status:</label>
         <select id="status" name="status">
-            <option value="">All</option>
-            <option value="received">Received</option>
+            <option  value="">All</option>
+            <option  value="received">Received</option>
             <option value="in progress">In Progress</option>
             <option value="ready for pickup">Ready for Pickup</option>
             <option value="completed">Completed</option>
